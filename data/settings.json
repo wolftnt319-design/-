@@ -1,0 +1,74 @@
+{
+  "ollama_base_url": "http://127.0.0.1:11434",
+  "primary_model": "qwen3:0.6b",
+  "active_model": "qwen3:0.6b",
+  "operating_mode": "hybrid_teacher",
+  "preferred_language": "auto",
+  "short_memory_max_turns": 8,
+  "short_memory_max_chars": 3200,
+  "rag_top_k": 3,
+  "fa_profile": {
+    "temperature": 0.42,
+    "top_p": 0.82,
+    "top_k": 20,
+    "repeat_penalty": 1.05,
+    "presence_penalty": 1.45,
+    "max_tokens": 200,
+    "num_ctx": 1024,
+    "stop": [
+      "<|im_end|>",
+      "User:",
+      "کاربر:"
+    ],
+    "seed": null,
+    "think": false
+  },
+  "en_profile": {
+    "temperature": 0.55,
+    "top_p": 0.85,
+    "top_k": 25,
+    "repeat_penalty": 1.1,
+    "presence_penalty": 1.2,
+    "max_tokens": 220,
+    "num_ctx": 1024,
+    "stop": [
+      "<|im_end|>",
+      "User:",
+      "کاربر:"
+    ],
+    "seed": null,
+    "think": false
+  },
+  "teacher": {
+    "enabled": true,
+    "provider": "pollinations_free",
+    "pollinations_url": "https://text.pollinations.ai/",
+    "custom_base_url": "",
+    "custom_model": "openai",
+    "auto_distill_exemplars": true,
+    "lmarena_url": "https://lmarena.ai/",
+    "timeout_seconds": 25.0
+  },
+  "security": {
+    "max_file_size_bytes": 5242880,
+    "max_web_chars": 6000,
+    "tool_timeout_seconds": 20.0,
+    "max_agent_steps": 4,
+    "agent_wall_timeout_seconds": 55.0,
+    "confirmation_ttl_seconds": 600,
+    "allowed_roots": [
+      "data/workspace",
+      "data/uploads"
+    ]
+  },
+  "hardware": {
+    "accelerator_mode": "hybrid_cpu_gpu",
+    "cpu_threads": 0,
+    "gpu_layers": 14,
+    "num_batch": 128,
+    "low_priority_ollama": true,
+    "ui_lite_glass": true
+  },
+  "server_host": "127.0.0.1",
+  "server_port": 8000
+}

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LUNA AI — دستیار هوشمند محلی پیشرفته</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- Ambient Liquid-Glass Background Orbs (GPU-light static radial layers) -->
+  <div class="aurora-bg" aria-hidden="true">
+    <div class="orb orb-cyan"></div>
+    <div class="orb orb-violet"></div>
+    <div class="orb orb-emerald"></div>
+  </div>
+
+  <div class="app-shell">
+    <!-- Top Floating Glass Command Bar -->
+    <header class="glass-panel topbar">
+      <div class="brand-cluster">
+        <button id="btnToggleSidebar" class="icon-btn mobile-only" title="منو">☰</button>
+        <div class="luna-orb-logo" aria-hidden="true">
+          <svg viewBox="0 0 36 36" width="26" height="26" fill="none">
+            <circle cx="18" cy="18" r="15" stroke="url(#lunaGrad)" stroke-width="2.4" />
+            <path d="M21.5 9.5A8.5 8.5 0 1 0 26.5 23a7 7 0 1 1-5-13.5Z" fill="url(#lunaGrad)" />
+            <defs>
+              <linearGradient id="lunaGrad" x1="4" y1="4" x2="32" y2="32">
+                <stop offset="0%" stop-color="#38bdf8" />
+                <stop offset="100%" stop-color="#a855f7" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title-row">
+            <h1 class="brand-title">LUNA AI</h1>
+            <span class="version-chip">v1.0 • Qwen3-0.6B</span>
+          </div>
+          <p class="brand-subtitle">هوش مصنوعی محلی، امن و کم‌مصرف با حافظه هیبرید و تقطیر دانش</p>
+        </div>
+      </div>
+
+      <div class="status-cluster">
+        <div id="pillInternet" class="status-pill" title="وضعیت شبکه">
+          <span class="dot"></span>
+          <span class="label">شبکه: بررسی...</span>
+        </div>
+        <div id="pillOllama" class="status-pill" title="وضعیت سرویس محلی Ollama">
+          <span class="dot"></span>
+          <span class="label">Ollama: بررسی...</span>
+        </div>
+        <div id="pillRam" class="status-pill subtle" title="مصرف رم و وضعیت تقسیم بار پردازنده/گرافیک">
+          <span class="label">RAM: --</span>
+        </div>
+
+        <select id="selectMode" class="glass-select" title="حالت مغز و استنتاج لونا">
+          <option value="hybrid_teacher">حالت هیبرید (محلی + معلم رایگان)</option>
+          <option value="local_strict">فقط محلی آفلاین (qwen3:0.6b)</option>
+          <option value="arena_dual">دوگانه Arena (مقایسه و تقطیر)</option>
+        </select>
+
+        <select id="selectLang" class="glass-select compact" title="زبان پاسخگویی">
+          <option value="auto">زبان: خودکار</option>
+          <option value="fa">فارسی</option>
+          <option value="en">English</option>
+        </select>
+
+        <button id="btnEnvModal" class="glass-btn secondary compact" title="گزارش واقعی محیط سیستم">
+          بررسی سیستم
+        </button>
+        <button id="btnToggleInspector" class="icon-btn mobile-only" title="پنل ابزار و حافظه">⚙</button>
+      </div>
+    </header>
+
+    <!-- Main 3-Pane Glass Workspace -->
+    <main class="workspace-grid">
+      <!-- Right Pane (RTL Start): Sessions, Quick Slash, & Workspace Files -->
+      <aside id="leftSidebar" class="glass-panel sidebar-pane">
+        <div class="pane-header">
+          <h2>گفتگوها و فایل‌ها</h2>
+          <div class="btn-row">
+            <button id="btnNewSession" class="glass-btn primary compact">+ گفتگوی جدید</button>
+            <button id="btnClearSession" class="glass-btn danger compact" title="پاک کردن گفتگوی فعلی">پاک‌سازی</button>
+          </div>
+        </div>
+
+        <div class="section-label">تاریخچه گفتگوها</div>
+        <div id="sessionList" class="scroll-list sessions-list"></div>
+
+        <div class="divider"></div>
+
+        <div class="section-header-inline">
+          <span class="section-label">فضای کاری مجاز (Word / Excel / متن)</span>
+          <label class="upload-chip" for="fileUploadInput" title="آپلود فایل داخل Sandbox">
+            + آپلود
+            <input id="fileUploadInput" type="file" accept=".docx,.xlsx,.txt,.md,.csv,.json" hidden />
+          </label>
+        </div>
+        <div id="fileList" class="scroll-list files-list"></div>
+
+        <div class="divider"></div>
+
+        <div class="section-label">دستورات سریع</div>
+        <div class="slash-chips">
+          <button class="chip-btn" data-prefix="/calc ">🧮 /calc محاسبه</button>
+          <button class="chip-btn" data-prefix="/google ">🌐 /google وب</button>
+          <button class="chip-btn" data-prefix="/memory ">🧠 /memory حافظه</button>
+          <button class="chip-btn" data-prefix="/notepad یادداشت.txt: ">📝 /notepad</button>
+          <button class="chip-btn" data-send="/files">📂 لیست فایل‌ها</button>
+        </div>
+      </aside>
+
+      <!-- Center Pane: Liquid-Glass Chat Stage -->
+      <section class="glass-panel chat-pane">
+        <!-- Active Tool / Thinking Floating Banner -->
+        <div id="liveActivityBar" class="live-activity hidden">
+          <div class="pulse-ring"></div>
+          <span id="liveActivityText">در حال پردازش...</span>
+          <button id="btnCancelTurn" class="glass-btn danger tiny">توقف عملیات</button>
+        </div>
+
+        <div id="chatMessages" class="chat-messages">
+          <!-- Welcome Glass Hero Card -->
+          <div class="welcome-card glass-subcard">
+            <div class="welcome-head">
+              <h3>به استودیوی شیشه‌ای LUNA AI خوش آمدید</h3>
+              <span class="provenance-badge local_model">آماده اجرا</span>
+            </div>
+            <p>
+              لونا برای اجرا روی سخت‌افزار سبک (Windows 10 / 8GB RAM) با مدل محلی <code>qwen3:0.6b</code> طراحی شده و مجهز به
+              <strong>مسیریاب ۴ مرحله‌ای</strong>، <strong>حافظه هیبرید SQLite FTS5 + TF-IDF</strong>، <strong>ابزارهای امن Word / Excel / Notepad / ماشین‌حساب / وب</strong>
+              و <strong>معلم آنلاین رایگان برای تقطیر دانش</strong> است.
+            </p>
+            <div class="starter-grid">
+              <button class="starter-card" data-prompt="لطفاً حساب کن ریشه دوم ۱۴۴ به علاوه ۲۵ ضربدر ۴ چند می‌شود؟">
+                <strong>🧮 ماشین‌حساب امن AST</strong>
+                <span>ریشه دوم ۱۴۴ به علاوه ۲۵ ضربدر ۴ چند می‌شود؟</span>
+              </button>
+              <button class="starter-card" data-prompt="اسم این پروژه سایه است.">
+                <strong>🧠 یادگیری تعاملی حافظه</strong>
+                <span>«اسم این پروژه سایه است.» (با تأیید کاربر)</span>
+              </button>
+              <button class="starter-card" data-prompt="فایل ورد گزارش_لونا.docx بساز با متن: خلاصه معماری امن دستیار هوشمند محلی">
+                <strong>📄 ساخت سند Word با پشتیبان</strong>
+                <span>ایجاد <code>گزارش_لونا.docx</code> در فضای امن</span>
+              </button>
+              <button class="starter-card" data-prompt="/google جدیدترین قابلیت‌های زبان برنامه‌نویسی Python">
+                <strong>🌐 جستجوی کنترل‌شده وب</strong>
+                <span>جستجو با مرز امنیتی محتوای غیرمطمئن</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Composer Bar -->
+        <form id="chatForm" class="composer-bar">
+          <textarea
+            id="chatInput"
+            rows="2"
+            placeholder="پیام خود را بنویسید... (Enter برای ارسال، Shift+Enter خط جدید | از /google یا /calc هم می‌توانید استفاده کنید)"
+          ></textarea>
+          <button id="btnSend" type="submit" class="glass-btn primary send-btn">
+            <span>ارسال</span>
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 2L11 13" /><path d="M22 2L15 22L11 13L2 9L22 2Z" />
+            </svg>
+          </button>
+        </form>
+      </section>
+
+      <!-- Left Pane (RTL End): Multi-Tab Glass Inspector -->
+      <aside id="rightInspector" class="glass-panel inspector-pane">
+        <nav class="inspector-tabs">
+          <button class="tab-btn active" data-tab="tabMemory">حافظه</button>
+          <button class="tab-btn" data-tab="tabParams">مدل</button>
+          <button class="tab-btn" data-tab="tabTeacher">معلم / Arena</button>
+          <button class="tab-btn" data-tab="tabAudit">امنیت</button>
+        </nav>
+
+        <!-- TAB 1: Persistent Memory Studio -->
+        <div id="tabMemory" class="tab-content active">
+          <div class="search-row">
+            <input id="memorySearchInput" class="glass-input" type="text" placeholder="جستجو در حافظه (FTS5 + TF-IDF)..." />
+            <button id="btnSearchMemory" class="glass-btn secondary compact">بگرد</button>
+          </div>
+
+          <details class="glass-accordion">
+            <summary>+ افزودن نکته جدید به حافظه بلندمدت</summary>
+            <div class="accordion-body">
+              <input id="memTitleInput" class="glass-input" type="text" placeholder="عنوان کوتاه (مثلاً: نام پروژه)" />
+              <div class="row-2col">
+                <select id="memCategoryInput" class="glass-select">
+                  <option value="project">پروژه (project)</option>
+                  <option value="preference">ترجیح (preference)</option>
+                  <option value="fact" selected>دانش/نکته (fact)</option>
+                  <option value="personal">شخصی (personal)</option>
+                  <option value="instruction">دستورالعمل (instruction)</option>
+                </select>
+                <select id="memImportanceInput" class="glass-select">
+                  <option value="5">اهمیت ۵ (حیاتی)</option>
+                  <option value="4">اهمیت ۴ (زیاد)</option>
+                  <option value="3" selected>اهمیت ۳ (متوسط)</option>
+                  <option value="2">اهمیت ۲ (کم)</option>
+                </select>
+              </div>
+              <textarea id="memContentInput" class="glass-textarea" rows="2" placeholder="متن حافظه (رمز عبور و توکن خودکار مسدود می‌شود)..."></textarea>
+              <button id="btnAddMemory" class="glass-btn primary full">ذخیره در SQLite</button>
+            </div>
+          </details>
+
+          <div id="memoryList" class="scroll-list memory-cards"></div>
+        </div>
+
+        <!-- TAB 2: Model & Parameter Lab -->
+        <div id="tabParams" class="tab-content">
+          <div class="field-group">
+            <label>مدل فعال محلی در Ollama</label>
+            <select id="paramActiveModel" class="glass-select full"></select>
+          </div>
+
+          <div class="subtab-switch">
+            <button class="subtab-btn active" data-langprofile="fa_profile">پروفایل فارسی (FA)</button>
+            <button class="subtab-btn" data-langprofile="en_profile">پروفایل انگلیسی (EN)</button>
+          </div>
+
+          <div class="param-grid">
+            <label>Temperature: <strong id="valTemp">0.42</strong>
+              <input id="paramTemp" type="range" min="0" max="1.5" step="0.05" value="0.42" />
+            </label>
+            <label>Top-P: <strong id="valTopP">0.82</strong>
+              <input id="paramTopP" type="range" min="0.1" max="1.0" step="0.02" value="0.82" />
+            </label>
+            <label>Presence Penalty (ضد تکرار): <strong id="valPresPen">1.45</strong>
+              <input id="paramPresPen" type="range" min="0" max="2.0" step="0.05" value="1.45" />
+            </label>
+            <label>Repeat Penalty: <strong id="valRepPen">1.05</strong>
+              <input id="paramRepPen" type="range" min="0.9" max="1.6" step="0.02" value="1.05" />
+            </label>
+            <div class="row-2col">
+              <div>
+                <label>Top-K</label>
+                <input id="paramTopK" class="glass-input" type="number" min="1" max="100" value="20" />
+              </div>
+              <div>
+                <label>Max Tokens</label>
+                <input id="paramMaxTok" class="glass-input" type="number" min="32" max="2048" value="320" />
+              </div>
+            </div>
+            <div class="row-2col">
+              <div>
+                <label>Context (num_ctx)</label>
+                <input id="paramNumCtx" class="glass-input" type="number" min="512" max="8192" step="256" value="2048" />
+              </div>
+              <div>
+                <label>Seed (اختیاری)</label>
+                <input id="paramSeed" class="glass-input" type="number" placeholder="تصادفی" />
+              </div>
+            </div>
+            <label class="checkbox-row">
+              <input id="paramThink" type="checkbox" />
+              <span>فعال‌سازی زنجیره تفکر Qwen3 (<code>/think</code> — کندتر روی CPU)</span>
+            </label>
+          </div>
+
+          <div class="divider"></div>
+          <div class="section-label">⚡ تقسیم بار گرافیک + پردازنده (ضد هنگ)</div>
+          <div class="param-grid">
+            <select id="hwAccelMode" class="glass-select full">
+              <option value="hybrid_cpu_gpu">ترکیبی هوشمند (GPU + CPU هم‌زمان)</option>
+              <option value="gpu_max">حداکثر انتقال به گرافیک (Vulkan / GPU)</option>
+              <option value="cpu_eco">فقط CPU کم‌مصرف و خنک (Eco)</option>
+            </select>
+            <div class="row-2col">
+              <div>
+                <label>هسته مجاز CPU (0=خودکار امن)</label>
+                <input id="hwCpuThreads" class="glass-input" type="number" min="0" max="16" value="0" />
+              </div>
+              <div>
+                <label>لایه‌های روی GPU (از ۲۸)</label>
+                <input id="hwGpuLayers" class="glass-input" type="number" min="0" max="99" value="14" />
+              </div>
+            </div>
+            <label class="checkbox-row">
+              <input id="hwLiteGlass" type="checkbox" checked />
+              <span>شیشه سبک گرافیکی (مخصوص Intel HD بدون افت فریم)</span>
+            </label>
+          </div>
+
+          <button id="btnSaveParams" class="glass-btn primary full">ذخیره پارامترها و تنظیمات سخت‌افزار</button>
+        </div>
+
+        <!-- TAB 3: Online Teacher & LMArena Distillation Studio -->
+        <div id="tabTeacher" class="tab-content">
+          <div class="glass-subcard compact-card">
+            <label class="checkbox-row">
+              <input id="teacherEnabledToggle" type="checkbox" checked />
+              <span>فعال بودن معلم آنلاین رایگان (بدون کلید پولی)</span>
+            </label>
+            <label class="field-label">تأمین‌کننده معلم رایگان</label>
+            <select id="teacherProviderSelect" class="glass-select full">
+              <option value="pollinations_free">Pollinations Free (بدون نیاز به API Key)</option>
+              <option value="custom_free_openai">سرور رایگان سازگار با OpenAI</option>
+              <option value="lmarena_bridge">پل مرورگر LMArena (با تشخیص CAPTCHA)</option>
+            </select>
+            <div id="customTeacherUrlWrap" class="hidden" style="margin-top:8px;">
+              <input id="customTeacherUrl" class="glass-input" type="text" placeholder="https://example.com/v1" dir="ltr" />
+            </div>
+            <div class="btn-row" style="margin-top:8px;">
+              <button id="btnSaveTeacherCfg" class="glass-btn primary compact">ثبت تنظیمات معلم</button>
+              <button id="btnProbeLMArena" class="glass-btn secondary compact">بررسی LMArena</button>
+            </div>
+            <div id="lmarenaProbeStatus" class="tiny-note"></div>
+          </div>
+
+          <details class="glass-accordion" open>
+            <summary>تقطیر دستی دانش (آموزش پاسخ طلایی به مدل کوچک)</summary>
+            <div class="accordion-body">
+              <input id="distillPromptInput" class="glass-input" type="text" placeholder="پرسش نمونه کاربر..." />
+              <textarea id="distillResponseInput" class="glass-textarea" rows="3" placeholder="پاسخ ایده‌آل و روان (از معلم یا LMArena) برای ذخیره در حافظه Few-Shot محلی..."></textarea>
+              <button id="btnDistillSave" class="glass-btn primary full">ثبت در حافظه آموزشی مدل محلی</button>
+            </div>
+          </details>
+
+          <div class="section-label">نمونه‌های تقطیرشده برای qwen3:0.6b (<span id="exemplarCount">0</span>)</div>
+          <div id="exemplarList" class="scroll-list exemplar-cards"></div>
+        </div>
+
+        <!-- TAB 4: Security & Redacted Audit Trail -->
+        <div id="tabAudit" class="tab-content">
+          <div class="btn-row" style="margin-bottom:8px;">
+            <span class="section-label" style="margin:0;">گزارش ممیزی امنیتی (Redacted)</span>
+            <button id="btnRefreshAudit" class="glass-btn secondary compact">بروزرسانی</button>
+          </div>
+          <div id="auditList" class="scroll-list audit-cards"></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Floating Glass Modal for File Inspection & System Environment Report -->
+  <div id="glassModal" class="modal-backdrop hidden">
+    <div class="glass-panel modal-window">
+      <div class="modal-header">
+        <h3 id="modalTitle">جزئیات</h3>
+        <button id="btnCloseModal" class="icon-btn">✕</button>
+      </div>
+      <div id="modalBody" class="modal-body" dir="auto"></div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
